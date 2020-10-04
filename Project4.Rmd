@@ -56,6 +56,6 @@ As there is only negligible improvement of model accuracy in the final model usi
 
 
 ```{r Predict on Models}
-rfPredict <- predict(object = rfModel_all, newdata = testData)
+rfPredict <- predict(object = rfModel, newdata = testData)
 rfPredict
 ```
