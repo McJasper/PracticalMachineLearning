@@ -1,1 +1,61 @@
+---
+title: "PML_Week4"
+author: "Justin McMullen"
+date: "10/4/2020"
+output:
+  html_document: default
+  word_document: default
+---
+# Introduction
+This work consists of an analysis of wearable activity monitoring data for the prediction of which activity is taking place using the metrics provided by the wearable device.  In short, data will be uploaded already divided into a testing and training set; k-fold Cross-Validation will be used to better estimate model fit on the training data; and multiple models will be created and compared for their predictive accuracy.  Finally, the testing data uploaded from the separate file will be used to make predictions using the best model for the final quiz.
 
+## Executive Summary
+A random forest model was fit to the data with no prior scaling due to the fact that pca preprocessing made no significant difference in within set accuracy.  Training set accuracy was ~70%, meaning accuracy in the testing data should be somewhere below, but close to this value given the k-fold cross validation approach applied.
+
+
+```{r setup, include=FALSE}
+.libPaths("C:\\Users\\mcmulju2\\AppData\\Local\\RStudio-Desktop\\Rpackages")
+library(knitr)
+library(rmarkdown)
+library(caret)
+knitr::opts_chunk$set(echo = TRUE)
+set.seed(3456)
+```
+
+## Analysis
+In order to simplify the dataset, only new time points will be considered, and only variables that contain mostly data (few NAs or 0 values) are considered.  To balance cross-validation utility with computational speed, 10-fold cross validation will be used.
+
+```{r Get_raw_data}
+trainData <- read.csv(file = "C:\\Users\\mcmulju2\\Desktop\\pml-training.csv")
+testData <- read.csv(file = "C:\\Users\\mcmulju2\\Desktop\\pml-testing.csv")
+
+tidyTrain <- trainData[which(trainData$new_window == "yes"),]
+
+tidyTrain <- cbind(factor(tidyTrain$classe), tidyTrain[,c(8:10,37:49)])
+
+names(tidyTrain)[1] = "classe"
+
+train_control <- train_control <- trainControl(method="cv", number=10)
+
+```
+
+### Model fitting and performance
+
+Random forest categorical model was fit with and without preprocessing.
+
+```{r Build Models}
+# train the model
+rfModel <- train(factor(classe)~., data=tidyTrain, trControl=train_control, method="rf")
+rfModelPca <- train(factor(classe)~., data=tidyTrain, trControl=train_control, method="rf", preprocess = "pca")
+
+
+rfModel$finalModel
+rfModelPca$finalModel
+```
+As there is only negligible improvement of model accuracy in the final model using preprocessing, it will not be applied in the final model used in this project.
+
+
+```{r Predict on Models}
+rfPredict <- predict(object = rfModel_all, newdata = testData)
+rfPredict
+```
