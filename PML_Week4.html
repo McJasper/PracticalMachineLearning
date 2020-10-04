@@ -380,31 +380,29 @@ summary {
 
 <div id="introduction" class="section level1">
 <h1>Introduction</h1>
-<p>This work consists of an analysis of wearable activity monitoring data for the prediction of which activity is taking place using the metrics provided by the wearable device. In short, data will be uploaded already divided into a testing and training set; k-fold Cross-Validation will be used to better estimate model fit on the training data; and multiple models will be created and compared for their predictive accuracy. Finally, the testing data uploaded from the separate file will be used to make predictions using the best model for the final quiz.</p>
+<p>This work consists of an analysis of wearable activity monitoring data for the prediction of which activity is taking place using the metrics provided by the wearable device. In short, data will be uploaded already divided into a testing and training set; k-fold Cross-Validation will be used to better estimate model fit on the training data; and a random forest model will be applied as this is a categorical modeling question. Finally, the testing data uploaded from the separate file will be used to make predictions using the best model for the final quiz.</p>
 <div id="executive-summary" class="section level2">
 <h2>Executive Summary</h2>
-<p>A random forest model was fit to the data with no prior scaling due to the fact that pca preprocessing made no significant difference in within set accuracy. Training set accuracy was ~70%, meaning accuracy in the testing data should be somewhere below, but close to this value given the k-fold cross validation approach applied.</p>
+<p>A random forest model was fit to the data with no prior preprocessing. Training set accuracy was ~98%, meaning accuracy in the testing data should be somewhere below, but close to this value given the k-fold cross validation approach applied.</p>
 </div>
 <div id="analysis" class="section level2">
 <h2>Analysis</h2>
-<p>In order to simplify the dataset, only new time points will be considered, and only variables that contain mostly data (few NAs or 0 values) are considered. To balance cross-validation utility with computational speed, 10-fold cross validation will be used.</p>
+<p>In order to simplify the dataset, only variables that contain mostly data (few NAs or 0 values) are considered. To balance cross-validation utility with computational speed, 10-fold cross validation will be used.</p>
 <pre class="r"><code>trainData &lt;- read.csv(file = &quot;C:\\Users\\mcmulju2\\Desktop\\pml-training.csv&quot;)
 testData &lt;- read.csv(file = &quot;C:\\Users\\mcmulju2\\Desktop\\pml-testing.csv&quot;)
 
-tidyTrain &lt;- trainData[which(trainData$new_window == &quot;yes&quot;),]
+tidyTrain &lt;- trainData#[which(trainData$new_window == &quot;yes&quot;),]
 
 tidyTrain &lt;- cbind(factor(tidyTrain$classe), tidyTrain[,c(8:10,37:49)])
 
 names(tidyTrain)[1] = &quot;classe&quot;
 
-train_control &lt;- train_control &lt;- trainControl(method=&quot;cv&quot;, number=10)</code></pre>
+train_control &lt;- train_control &lt;- trainControl(method=&quot;cv&quot;, number=5)</code></pre>
 <div id="model-fitting-and-performance" class="section level3">
 <h3>Model fitting and performance</h3>
 <p>Random forest categorical model was fit with and without preprocessing.</p>
 <pre class="r"><code># train the model
 rfModel &lt;- train(factor(classe)~., data=tidyTrain, trControl=train_control, method=&quot;rf&quot;)
-rfModelPca &lt;- train(factor(classe)~., data=tidyTrain, trControl=train_control, method=&quot;rf&quot;, preprocess = &quot;pca&quot;)
-
 
 rfModel$finalModel</code></pre>
 <pre><code>## 
@@ -412,36 +410,21 @@ rfModel$finalModel</code></pre>
 ##  randomForest(x = x, y = y, mtry = param$mtry) 
 ##                Type of random forest: classification
 ##                      Number of trees: 500
-## No. of variables tried at each split: 2
+## No. of variables tried at each split: 9
 ## 
-##         OOB estimate of  error rate: 29.31%
+##         OOB estimate of  error rate: 2.47%
 ## Confusion matrix:
-##    A  B  C  D  E class.error
-## A 87  6  3 10  3   0.2018349
-## B  9 56  5  8  1   0.2911392
-## C 15 10 35 10  0   0.5000000
-## D  7  2  8 49  3   0.2898551
-## E  9  3  0  7 60   0.2405063</code></pre>
-<pre class="r"><code>rfModelPca$finalModel</code></pre>
-<pre><code>## 
-## Call:
-##  randomForest(x = x, y = y, mtry = param$mtry, preprocess = &quot;pca&quot;) 
-##                Type of random forest: classification
-##                      Number of trees: 500
-## No. of variables tried at each split: 2
-## 
-##         OOB estimate of  error rate: 28.57%
-## Confusion matrix:
-##    A  B  C  D  E class.error
-## A 87 10  3  8  1   0.2018349
-## B  9 60  4  6  0   0.2405063
-## C 13 13 36  8  0   0.4857143
-## D  6  5  8 47  3   0.3188406
-## E 10  2  0  7 60   0.2405063</code></pre>
+##      A    B    C    D    E class.error
+## A 5488   33   28   19   12 0.016487455
+## B   47 3690   48   10    2 0.028180142
+## C   52   85 3240   43    2 0.053185272
+## D   17    8   32 3146   13 0.021766169
+## E   11    9    6    8 3573 0.009426116</code></pre>
 <p>As there is only negligible improvement of model accuracy in the final model using preprocessing, it will not be applied in the final model used in this project.</p>
 <pre class="r"><code>rfPredict &lt;- predict(object = rfModel, newdata = testData)
+
 rfPredict</code></pre>
-<pre><code>##  [1] A A A A A E D B A A B C B A E A A B A B
+<pre><code>##  [1] B A B A A E D B A A B C B A E E A B B B
 ## Levels: A B C D E</code></pre>
 </div>
 </div>
